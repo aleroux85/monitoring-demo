@@ -1,0 +1,14 @@
+global:
+  smtp_hello: host-a
+  smtp_from: host-a
+  smtp_smarthost: smtp.gmail.com:587
+  smtp_auth_username:
+  smtp_auth_password:
+
+route:
+  receiver: 'team-mails'
+
+receivers:
+- name: 'team-mails'
+  email_configs:
+  - to: 'aleroux85@gmail.com'

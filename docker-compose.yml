@@ -1,0 +1,76 @@
+version: "3.7"
+
+volumes:
+    prometheus_data: {}
+    grafana_data: {}
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.17.0
+    volumes:
+      - ./configuration/prometheus/:/etc/prometheus/
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    ports:
+      - 9090:9090
+
+  alertmanager:
+    image: prom/alertmanager:v0.20.0
+    ports:
+      - 9093:9093
+    volumes:
+      - ./configuration/alertmanager/:/etc/alertmanager/
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+
+  grafana:
+    image: grafana/grafana:9.1.7
+    user: "1000:1000"
+    # depends_on:
+    #   - prometheus
+    ports:
+      - 3000:3000
+    # volumes:
+    #   - grafana_data:/var/lib/grafana
+    #   - ./configuration/grafana/provisioning/:/etc/grafana/provisioning/
+    # env_file:
+    #   - ./configuration/grafana/config.monitoring
+
+  influxdb:
+    image: bitnami/influxdb:2.4.0
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_ADMIN_USER_PASSWORD=password123
+      - INFLUXDB_ADMIN_USER_TOKEN=asdf1234
+      - INFLUXDB_USER=my_user
+      - INFLUXDB_USER_PASSWORD=my_password
+      - INFLUXDB_DB=my_database
+
+
+  loki:
+    image: grafana/loki:1.4.1
+    ports:
+      - 3100:3100
+    volumes:
+      - ./configuration/loki:/etc/loki
+    command: -config.file=/etc/loki/config.yml
+      
+  promtail:
+    image: grafana/promtail:1.4.1
+    volumes:
+      - ./configuration/promtail/:/etc/promtail
+      - /var/log:/var/log
+    ports:
+      - 9080:9080
+    command: -config.file=/etc/promtail/config.yml
+            
+  service-a:
+    build: service-a/
+    ports:
+      - 2112:2112
